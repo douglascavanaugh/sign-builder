@@ -3,13 +3,12 @@
 const SHOP = 'allwayzmags.myshopify.com'
 const TOKEN = process.env.SHOPIFY_TOKEN
 const API_VERSION = '2024-01'
+const SIGN_BUILDER_URL = 'https://sign-builder.vercel.app'
 
 if (!TOKEN) {
-  console.error('Usage: SHOPIFY_TOKEN=shpat_xxx SIGN_BUILDER_URL=https://your-app.vercel.app node scripts/setup-shopify-page.js')
+  console.error('Usage: SHOPIFY_TOKEN=shpat_xxx node scripts/setup-shopify-page.js')
   process.exit(1)
 }
-
-const SIGN_BUILDER_URL = process.env.SIGN_BUILDER_URL || 'https://sign-builder.vercel.app'
 
 async function shopifyRequest(endpoint, method = 'GET', body = null) {
   const options = {
@@ -31,26 +30,43 @@ async function shopifyRequest(endpoint, method = 'GET', body = null) {
   return data
 }
 
-async function createPage() {
-  console.log('Creating "Custom Signs" page...')
+async function main() {
+  console.log(`Creating "Custom Signs" page embedding: ${SIGN_BUILDER_URL}\n`)
 
-  const pageHtml = `
-<div style="width:100%;max-width:1400px;margin:0 auto;padding:0;">
+  const pageHtml = `<style>
+  .template-page .main-content,
+  .template-page .page-width,
+  .template-page .shopify-section,
+  .template-page .rte,
+  .template-page main .page-width,
+  .template-page .section-template--page,
+  .main-page-content .page-width,
+  .shopify-section--template--page .page-width,
+  #MainContent .page-width,
+  #shopify-section-template--page .page-width,
+  .page-content .page-width,
+  article .page-width,
+  article .rte {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 100px !important;
+    padding-right: 100px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+</style>
+<div style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;padding:0 100px;box-sizing:border-box;">
   <iframe
     src="${SIGN_BUILDER_URL}"
-    style="width:100%;height:90vh;border:none;border-radius:8px;"
+    style="width:100%;height:90vh;border:none;"
     allow="clipboard-write"
     title="Custom Sign Builder"
   ></iframe>
-</div>
-<style>
-  .shopify-section-template--custom-signs .page-width { max-width: 100% !important; padding: 0 !important; }
-  .main-content { padding: 0 !important; }
-</style>`.trim()
+</div>`
 
   const result = await shopifyRequest('/pages.json', 'POST', {
     page: {
-      title: 'Custom Signs',
+      title: 'Custom Signs - Coming Soon',
       handle: 'custom-signs',
       body_html: pageHtml,
       published: true,
@@ -58,71 +74,31 @@ async function createPage() {
   })
 
   if (result?.page) {
-    console.log(`  Page created: ${result.page.id}`)
-    console.log(`  URL: https://allwayzmags.com/pages/custom-signs`)
-    return result.page
+    console.log(`Page created successfully!`)
+    console.log(`  ID: ${result.page.id}`)
+    console.log(`  URL: https://allwayzmags.com/pages/custom-signs\n`)
   } else {
-    console.log('  Page may already exist, checking...')
+    console.log('Page may already exist. Checking...')
     const existing = await shopifyRequest('/pages.json?handle=custom-signs')
     if (existing?.pages?.length > 0) {
       console.log(`  Found existing page: ${existing.pages[0].id}`)
-      return existing.pages[0]
+      console.log(`  Updating it...`)
+      await shopifyRequest(`/pages/${existing.pages[0].id}.json`, 'PUT', {
+        page: { body_html: pageHtml },
+      })
+      console.log(`  Updated!\n`)
     }
   }
-  return null
-}
 
-async function addMenuItem() {
-  console.log('\nLooking for main menu...')
-
-  const menus = await shopifyRequest('/menus.json')
-
-  if (!menus?.menus) {
-    console.log('  Could not fetch menus via REST API.')
-    console.log('  You can add the menu item manually in Shopify:')
-    console.log('  Settings > Navigation > Main menu > Add menu item')
-    console.log('  Name: Custom Signs')
-    console.log('  Link: /pages/custom-signs')
-    return
-  }
-
-  const mainMenu = menus.menus.find((m) =>
-    m.handle === 'main-menu' || m.handle === 'main' || m.title.toLowerCase().includes('main')
-  )
-
-  if (!mainMenu) {
-    console.log('  Main menu not found. Available menus:')
-    menus.menus.forEach((m) => console.log(`    - ${m.handle}: "${m.title}"`))
-    console.log('\n  Add the menu item manually:')
-    console.log('  Settings > Navigation > Main menu > Add menu item')
-    console.log('  Name: Custom Signs')
-    console.log('  Link: /pages/custom-signs')
-    return
-  }
-
-  console.log(`  Found main menu: "${mainMenu.title}" (${mainMenu.handle})`)
-  console.log('  Adding "Custom Signs" link...')
-
-  console.log('\n  NOTE: Shopify REST API menu editing is limited.')
-  console.log('  Please add the menu item manually:')
-  console.log('  Go to: allwayzmags.myshopify.com/admin/menus')
-  console.log('  Edit main menu > Add menu item:')
-  console.log('    Name: Custom Signs')
-  console.log('    Link: /pages/custom-signs')
-}
-
-async function main() {
-  console.log(`Sign Builder URL: ${SIGN_BUILDER_URL}\n`)
-
-  await createPage()
-  await addMenuItem()
-
-  console.log('\n--- DONE ---')
-  console.log('Next steps:')
-  console.log('1. Deploy sign-builder to Vercel and get the URL')
-  console.log('2. If needed, re-run this script with the correct SIGN_BUILDER_URL')
-  console.log('3. Add "Custom Signs" to your main menu in Shopify admin')
-  console.log(`4. Visit https://allwayzmags.com/pages/custom-signs to test`)
+  console.log('--- NEXT STEP ---')
+  console.log('Add "Custom Signs" to your main menu:')
+  console.log('  1. Go to: https://allwayzmags.myshopify.com/admin/menus')
+  console.log('  2. Click on your main menu')
+  console.log('  3. Click "Add menu item"')
+  console.log('  4. Name: Custom Signs')
+  console.log('  5. Link: select Pages > Custom Signs')
+  console.log('  6. Save menu')
+  console.log(`\nThen visit: https://allwayzmags.com/pages/custom-signs`)
 }
 
 main().catch((err) => {

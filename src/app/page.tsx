@@ -5,6 +5,7 @@ import { Download, ShoppingCart, Eraser, Image as ImageIcon, ZoomIn, ZoomOut, Ma
 import dynamic from 'next/dynamic'
 import toast from 'react-hot-toast'
 
+import { getVariantId, uploadDesignImage, addToShopifyCart } from '@/lib/shopify-cart'
 import SignTemplatePicker from '@/components/SignTemplatePicker'
 import SvgLibrary from '@/components/SvgLibrary'
 import TextTool from '@/components/TextTool'
@@ -270,25 +271,45 @@ export default function BuilderPage() {
     toast.success('Design downloaded!')
   }, [getFilename])
 
-  const handleAddToCart = useCallback(() => {
+  const [addingToCart, setAddingToCart] = useState(false)
+
+  const handleAddToCart = useCallback(async () => {
     const png = canvasHandleRef.current?.exportPNG()
-    const json = canvasHandleRef.current?.exportJSON()
-    if (!png || !json) {
+    if (!png) {
       toast.error('Please add some elements to your sign first')
       return
     }
 
-    console.log('Design ready for cart:', {
-      productCode: productCode.trim() || undefined,
-      template: template.id,
-      templateName: template.name,
-      filename: getFilename(),
-      png: png.substring(0, 50) + '...',
-      config: JSON.parse(json),
-    })
+    const variantId = getVariantId(template.id)
+    if (!variantId) {
+      toast.error('Could not find this sign size in the store')
+      return
+    }
 
-    toast.success('Design saved! Cart integration coming soon.')
-  }, [template, productCode, getFilename])
+    setAddingToCart(true)
+    const toastId = toast.loading('Saving your design...')
+
+    try {
+      const designUrl = await uploadDesignImage(
+        png,
+        productCode.trim() || 'custom',
+        template.id
+      )
+
+      toast.success('Adding to cart...', { id: toastId })
+
+      addToShopifyCart(
+        variantId,
+        designUrl,
+        productCode.trim() || 'Custom Design',
+        template.name
+      )
+    } catch (err) {
+      console.error('Add to cart error:', err)
+      toast.error('Failed to save design. Please try again.', { id: toastId })
+      setAddingToCart(false)
+    }
+  }, [template, productCode])
 
   return (
     <div className="h-screen flex flex-col">
@@ -323,13 +344,16 @@ export default function BuilderPage() {
           </button>
           <button
             onClick={handleAddToCart}
+            disabled={addingToCart}
             className={cn(
               'flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors font-medium',
-              'bg-brand-500 text-white hover:bg-brand-600'
+              addingToCart
+                ? 'bg-brand-300 text-white cursor-wait'
+                : 'bg-brand-500 text-white hover:bg-brand-600'
             )}
           >
             <ShoppingCart className="w-4 h-4" />
-            Add to Cart
+            {addingToCart ? 'Saving...' : 'Add to Cart'}
           </button>
         </div>
       </header>

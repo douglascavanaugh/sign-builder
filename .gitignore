@@ -14,5 +14,8 @@ design-list.json
 public/signs/scenes/originals/
 public/signs/silhouettes/originals/
 public/signs/originals/
+
+# Uploaded design images
+public/designs/
 .vercel
 .env*.local
