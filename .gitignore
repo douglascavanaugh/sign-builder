@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Downloaded product data
+shopify-products.json
+paper-towel-product-full.json
+design-list.json
+
+# Original images (large, don't commit)
+public/signs/scenes/originals/
+public/signs/silhouettes/originals/
+public/signs/originals/
