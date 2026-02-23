@@ -41,9 +41,9 @@ export default function BuilderPage() {
       const response = await fetch(svgUrl)
       const svgText = await response.text()
       const result = await fabric.loadSVGFromString(svgText)
-      const paths = result.objects.filter(Boolean) as fabric.FabricObject[]
+      const paths = result.objects.filter(Boolean) as any[]
 
-      paths.forEach((p) => {
+      paths.forEach((p: any) => {
         if (!p.fill || p.fill === 'none' || p.fill === 'transparent' || p.fill === '') {
           p.set('fill', '#1c1917')
         }
@@ -83,9 +83,9 @@ export default function BuilderPage() {
       if (isSvg) {
         const svgText = await file.text()
         const result = await fabric.loadSVGFromString(svgText)
-        const paths = result.objects.filter(Boolean) as fabric.FabricObject[]
+        const paths = result.objects.filter(Boolean) as any[]
 
-        paths.forEach((p) => {
+        paths.forEach((p: any) => {
           if (!p.fill || p.fill === 'none' || p.fill === 'transparent' || p.fill === '') {
             p.set('fill', '#1c1917')
           }
