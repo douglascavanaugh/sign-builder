@@ -71,5 +71,9 @@ export function addToShopifyCart(
 
   const cartUrl = `${SHOPIFY_STORE}/cart/${variantId}:1?properties[Design_Image]=${encodeURIComponent(designImageUrl)}&properties[Product_Code]=${encodeURIComponent(productCode)}&properties[Size]=${encodeURIComponent(templateName)}`
 
-  window.top?.location.assign(cartUrl)
+  const a = document.createElement('a')
+  a.href = cartUrl
+  a.target = '_top'
+  a.rel = 'noopener'
+  a.click()
 }
