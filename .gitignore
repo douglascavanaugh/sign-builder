@@ -5,6 +5,9 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# Credentials / secrets
+docs/
+
 # Downloaded product data
 shopify-products.json
 paper-towel-product-full.json

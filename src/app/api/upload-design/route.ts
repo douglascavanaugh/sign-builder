@@ -113,10 +113,45 @@ export async function POST(request: NextRequest) {
     }
 
     const shopifyFile = fileResult.data?.fileCreate?.files?.[0]
+    const fileId = shopifyFile?.id
+
     let imageUrl = shopifyFile?.image?.url
+
+    if (!imageUrl && fileId) {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500))
+
+        const pollResult = await shopifyGraphQL(`
+          query getFile($id: ID!) {
+            node(id: $id) {
+              ... on MediaImage {
+                image {
+                  url
+                }
+                fileStatus
+              }
+            }
+          }
+        `, { id: fileId })
+
+        const polledUrl = pollResult.data?.node?.image?.url
+        const status = pollResult.data?.node?.fileStatus
+
+        if (polledUrl) {
+          imageUrl = polledUrl
+          break
+        }
+
+        if (status === 'FAILED') {
+          console.error('Shopify file processing failed for:', fileId)
+          break
+        }
+      }
+    }
 
     if (!imageUrl) {
       imageUrl = target.resourceUrl
+      console.warn('Fell back to staged upload URL — permanent URL not yet available:', filename)
     }
 
     return NextResponse.json({ url: imageUrl, filename })
