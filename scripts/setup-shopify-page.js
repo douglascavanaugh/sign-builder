@@ -84,7 +84,7 @@ async function main() {
       console.log(`  Found existing page: ${existing.pages[0].id}`)
       console.log(`  Updating it...`)
       await shopifyRequest(`/pages/${existing.pages[0].id}.json`, 'PUT', {
-        page: { body_html: pageHtml },
+        page: { title: 'Custom Signs - Coming Soon', body_html: pageHtml },
       })
       console.log(`  Updated!\n`)
     }
