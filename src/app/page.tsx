@@ -365,7 +365,17 @@ export default function BuilderPage() {
           <TextTool onAddText={handleAddText} />
         </aside>
 
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main
+          className="flex-1 flex flex-col overflow-hidden"
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const svgUrl = e.dataTransfer.getData('text/plain');
+            if (svgUrl && (svgUrl.endsWith('.svg') || svgUrl.includes('/svgs/'))) {
+              handleAddSvg(svgUrl);
+            }
+          }}
+        >
           <div className="flex-1 overflow-auto relative bg-stone-200">
             <div className="sticky top-0 z-10 px-4 py-2 flex justify-center pointer-events-none">
               <div className="pointer-events-auto">
