@@ -63,13 +63,18 @@ export function addToShopifyCart(
   productCode: string,
   templateName: string,
 ) {
-  const properties = encodeURIComponent(
-    `Design Image=${designImageUrl}&Product Code=${productCode}&Size=${templateName}`
-  )
-    .replace(/%3D/g, '=')
-    .replace(/%26/g, '&')
+  const sizeClean = templateName.replace(/[""×]/g, (ch) => ch === '×' ? 'x' : '"')
 
-  const cartUrl = `${SHOPIFY_STORE}/cart/${variantId}:1?properties[Design_Image]=${encodeURIComponent(designImageUrl)}&properties[Product_Code]=${encodeURIComponent(productCode)}&properties[Size]=${encodeURIComponent(templateName)}`
+  const params = new URLSearchParams({
+    id: String(variantId),
+    quantity: '1',
+  })
+
+  const cartUrl =
+    `${SHOPIFY_STORE}/cart/add?${params.toString()}` +
+    `&properties%5BDesign_Image%5D=${encodeURIComponent(designImageUrl)}` +
+    `&properties%5BProduct_Code%5D=${encodeURIComponent(productCode)}` +
+    `&properties%5BSize%5D=${encodeURIComponent(sizeClean)}`
 
   const a = document.createElement('a')
   a.href = cartUrl
